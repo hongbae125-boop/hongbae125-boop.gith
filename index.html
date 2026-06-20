@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>y2k mega archive : mp3 & pager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DungGeunMo&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #f0f5fa;         
+            --paper-white: #ffffff;     
+            --pocari-blue: #3a86ff;     
+            --soft-sky: #adc1e6;        
+            --text-dark: #464f5b;       
+            --border-color: #cbd5e1;    
+            --screen-green: #e6f4ea;    
+            --screen-text: #2d4a34;
+            --pager-screen: #87af87; 
+            --pager-text: #1a331a;
+            --diary-clean-bg: rgba(255, 255, 255, 0.65);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'DungGeunMo', 'Share Tech Mono', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: linear-gradient(var(--border-color) 0.5px, transparent 0.5px), linear-gradient(90deg, var(--border-color) 0.5px, transparent 0.5px);
+            background-size: 25px 25px;
+            color: var(--text-dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .mega-container {
+            background: var(--paper-white);
+            border: 2px solid var(--pocari-blue);
+            border-radius: 4px; 
+            box-shadow: 6px 6px 0px var(--soft-sky);
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 🗂️ 탭 메뉴 */
+        .archive-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--pocari-blue);
+            padding-bottom: 5px;
+        }
+
+        .tab-item {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            background: #fafafa;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        .tab-item.active {
+            background: var(--pocari-blue);
+            color: white;
+            border-color: var(--pocari-blue);
+            font-weight: bold;
+        }
+
+        .view-panel {
+            display: none;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        /* 💽 TRACK 01. MP3 스타일 */
+        .mp3-player {
+            background: #f4ede4; 
+            border: 2px solid var(--text-dark);
+            border-radius: 20px; 
+            padding: 20px;
+            box-shadow: inset -3px -3px 0px #d7c0ae, inset 3px 3px 0px #fff;
+            margin-bottom: 25px;
+        }
+
+        .mp3-screen {
+            background: var(--screen-green);
+            border: 2px solid var(--text-dark);
+            border-radius: 4px;
+            height: 90px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: var(--screen-text);
+            box-shadow: inset 2px 2px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .screen-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .now-playing-title {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .equalizer {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 25px;
+        }
+
+        .eq-bar {
+            width: 6px;
+            height: 3px;
+            background-color: var(--screen-text);
+            transition: height 0.15s ease;
+        }
+
+        .wheel-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .click-wheel {
+            width: 110px;
+            height: 110px;
+            background: #fff;
+            border: 2px solid var(--text-dark);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .center-button {
+            width: 36px;
+            height: 36px;
+            background: var(--pocari-blue);
+            border: 2px solid var(--text-dark);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .wheel-text {
+            position: absolute;
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            font-weight: bold;
+            bottom: 8px;
+        }
+
+        .input-box {
+            background: #fafbfc;
+            border: 1px solid var(--soft-sky);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 8px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--soft-sky);
+            margin-bottom: 3px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .add-btn, .save-diary-btn {
+            width: 100%;
+            background: var(--pocari-blue);
+            color: white;
+            border: 1px solid var(--pocari-blue);
+            padding: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 var(--soft-sky);
+        }
+
+        .playlist-title, .diary-header-box, .pager-title {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .diary-header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .playlist-title, .diary-title, .pager-title {
+            border-left: 3px solid var(--pocari-blue);
+            padding-left: 6px;
+        }
+
+        .receipt-btn {
+            background: none;
+            border: 1px solid var(--pocari-blue);
+            color: var(--pocari-blue);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        .receipt-btn:hover { background: var(--pocari-blue); color: #fff; }
+
+        .track-list {
+            list-style: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .track-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+
+        .track-info { cursor: pointer; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .track-info:hover { color: var(--pocari-blue); text-decoration: underline; }
+        .track-del { background: none; border: none; color: var(--border-color); cursor: pointer; }
+
+        /* 🎨 TRACK 02. 다이어리 꾸미기 스타일 */
+        .diary-wrapper { position: relative; }
+        .diary-paper {
+            background-color: var(--diary-clean-bg);
+            background-image: linear-gradient(rgba(173, 193, 230, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(173, 193, 230, 0.15) 1px, transparent 1px);
+            background-size: 15px 15px;
+            border: 1px solid var(--soft-sky);
+            border-radius: 2px;
+            min-height: 250px;
+            padding: 15px;
+            position: relative;
+            margin-bottom: 15px;
+            box-shadow: inset 0px 0px 8px rgba(58, 134, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .diary-textarea {
+            width: 100%;
+            min-height: 220px;
+            background: transparent;
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+            position: relative;
+            z-index: 1;
+        }
+
+        .sticker-box {
+            background: var(--bg-base);
+            border-left: 3px solid var(--pocari-blue);
+            padding: 10px 12px;
+            margin-bottom: 15px;
+        }
+
+        .sticker-box p {
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .sticker-palette { display: flex; gap: 12px; }
+        .sticker-item { font-size: 1.4rem; cursor: pointer; transition: transform 0.1s ease-in-out; }
+        .sticker-item:hover { transform: scale(1.3); }
+
+        .placed-sticker {
+            position: absolute;
+            font-size: 1.5rem;
+            cursor: move;
+            z-index: 10;
+            user-select: none;
+            transform-origin: center;
+        }
+
+        /* 🧾 영수증 컴포넌트 */
+        .receipt-printer-slot {
+            position: relative;
+            background: #cbd5e1;
+            height: 4px;
+            margin-top: 15px;
+            border-radius: 2px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .printed-receipt {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            width: 90%;
+            margin: 0 auto;
+            max-height: 0; 
+            opacity: 0;
+            overflow: hidden;
+            padding: 0 15px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: max-height 1s cubic-bezier(0.1, 1, 0.1, 1), padding 0.4s, opacity 0.3s;
+            background-image: linear-gradient(-135deg, transparent 4px, #fff 4px), linear-gradient(135deg, transparent 4px, #fff 4px);
+            background-position: bottom left;
+            background-size: 8px 8px;
+            background-repeat: repeat-x;
+            padding-bottom: 15px;
+        }
+
+        .printed-receipt.dispense {
+            max-height: 300px;
+            opacity: 1;
+            padding-top: 15px;
+            padding-bottom: 20px;
+        }
+
+        .receipt-line { border-top: 1px dashed #cbd5e1; margin: 8px 0; }
+        .receipt-barcode { letter-spacing: 2px; font-size: 1rem; text-align: center; margin-top: 10px; opacity: 0.7; }
+
+        /* 📟 TRACK 03. 삐삐 스타일 전용 시스템 하드웨어 디자인 */
+        .pager-device {
+            background: #252e38; 
+            border: 3px solid #111;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: inset -4px -4px 0 #1e252f, inset 4px 4px 0 #425263, 5px 5px 0px var(--soft-sky);
+            margin-bottom: 20px;
+        }
+
+        .pager-screen-bezel {
+            background: #15191e;
+            padding: 10px;
+            border-radius: 6px;
+            border: 2px solid #0d1013;
+            margin-bottom: 15px;
+        }
+
+        .pager-lcd {
+            background: var(--pager-screen);
+            height: 75px;
+            border-radius: 3px;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3);
+            padding: 10px;
+            color: var(--pager-text);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-weight: bold;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.2);
+        }
+
+        .pager-lcd-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            border-bottom: 1px solid rgba(0,0,0,0.15);
+            padding-bottom: 2px;
+        }
+
+        .pager-lcd-main {
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 1px;
+            margin: 5px 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pager-hardware-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px;
+        }
+
+        .pager-circle-btn {
+            width: 24px;
+            height: 24px;
+            background: #e63946; 
+            border: 2px solid #111;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #9d1c24;
+        }
+        .pager-circle-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        .pager-pill-btns { display: flex; gap: 8px; }
+
+        .pager-pill {
+            background: #4a5768;
+            border: 2px solid #111;
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 3px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #2c3541;
+        }
+        .pager-pill:active { transform: translateY(2px); box-shadow: none; }
+
+        /* 외부 송신용 키패드 아키텍처 */
+        .pager-keypad-box {
+            background: #fafbfc;
+            border: 1px solid var(--soft-sky);
+            border-radius: 4px;
+            padding: 15px;
+        }
+
+        .pager-keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-width: 180px;
+            margin: 0 auto 12px auto;
+        }
+
+        .keypad-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 4px;
+            box-shadow: 0 2px 0 var(--border-color);
+        }
+        .keypad-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        .keypad-action-row { display: flex; gap: 6px; }
+        .keypad-action-row button {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid var(--pocari-blue);
+            border-radius: 2px;
+        }
+        .pager-clear { background: #fff; color: var(--pocari-blue); }
+        .pager-send { background: var(--pocari-blue); color: #fff; box-shadow: 2px 2px 0 var(--soft-sky); }
+    </style>
+</head>
+<body>
+
+<div class="mega-container">
+    <div class="archive-tabs">
+        <div class="tab-item active" onclick="switchTab(1)">TRACK 01. MP3</div>
+        <div class="tab-item" onclick="switchTab(2)">TRACK 02. 다꾸 🎨</div>
+        <div class="tab-item" onclick="switchTab(3)">TRACK 03. 삐삐 📟</div>
+    </div>
+
+    <div id="panel-1" class="view-panel active">
+        <div class="mp3-player">
+            <div class="mp3-screen">
+                <div class="screen-top">
+                    <span>▲ PLAYING</span>
+                    <span id="play-status">STOP</span>
+                </div>
+                <div class="now-playing-title" id="screen-title">선택된 노래 없음 ｡•́_•̀｡</div>
+                <div class="equalizer" id="eq">
+                    <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                    <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                </div>
+            </div>
+            <div class="wheel-container">
+                <div class="click-wheel">
+                    <button class="center-button" onclick="togglePlay()"></button>
+                    <div class="wheel-text">MENU</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-box">
+            <div class="input-group"><label>song title</label><input type="text" id="song-title" placeholder="ex) Bubble Gum"></div>
+            <div class="input-group"><label>artist</label><input type="text" id="song-artist" placeholder="ex) NewJeans"></div>
+            <div class="input-group"><label>music link</label><input type="text" id="song-link" placeholder="https://..."></div>
+            <button class="add-btn" onclick="addTrack()">ADD TO PLAYLIST ⟡</button>
+        </div>
+        <h3 class="playlist-title">my tracklist archive</h3>
+        <ul class="track-list" id="track-list-view"></ul>
+    </div>
+
+    <div id="panel-2" class="view-panel">
+        <div class="sticker-box">
+            <p>스티커 클릭 -> 드래그 배치 (더블클릭 시 폭파💥) <br><span style="font-size:0.65rem; opacity:0.6;">* 스티커 위에서 마우스 휠을 굴리면 크기가 변해요!</span></p>
+            <div class="sticker-palette">
+                <span class="sticker-item" onclick="spawnSticker('👾')">👾</span>
+                <span class="sticker-item" onclick="spawnSticker('🛸')">🛸</span>
+                <span class="sticker-item" onclick="spawnSticker('💊')">💊</span>
+                <span class="sticker-item" onclick="spawnSticker('🎸')">🎸</span>
+                <span class="sticker-item" onclick="spawnSticker('🎧')">🎧</span>
+                <span class="sticker-item" onclick="spawnSticker('⚡')">⚡</span>
+                <span class="sticker-item" onclick="spawnSticker('📟')">📟</span> 
+            </div>
+        </div>
+
+        <div class="diary-wrapper">
+            <div class="diary-header-box">
+                <h3 class="diary-title">today's mini log</h3>
+                <button class="receipt-btn" onclick="addReceiptText()">🧾 영수증 문구 받기</button>
+            </div>
+            <div class="diary-paper" id="diary-paper">
+                <textarea class="diary-textarea" id="diary-text" placeholder="오늘 느낀 그 감정 그대로..."></textarea>
+            </div>
+        </div>
+        <div style="position: relative;">
+            <button class="save-diary-btn" onclick="saveDiary()">SAVE DIARY ⟡</button>
+        </div>
+
+        <div class="receipt-printer-slot"></div>
+        <div class="printed-receipt" id="receipt-paper" onclick="retractReceipt()" title="클릭하면 영수증을 기계 속으로 집어넣어요!">
+            <div>*** DIARY RECEIPT ***</div>
+            <div id="receipt-date" style="font-size: 0.65rem; color: #888; margin: 3px 0;">DATE: 2026-00-00 00:00:00</div>
+            <div class="receipt-line"></div>
+            <div id="receipt-content" style="white-space: pre-wrap; word-break: break-all; font-family: sans-serif; font-size: 0.8rem; line-height: 1.4;">내용이 여기에 출력됩니다.</div>
+            <div class="receipt-line"></div>
+            <div style="text-align: right; font-weight: bold;">STATUS: ARCHIVED</div>
+            <div class="receipt-barcode">|||| | | |||| ||| | ||</div>
+        </div>
+    </div>
+
+    <div id="panel-3" class="view-panel">
+        <h3 class="pager-title" style="margin-bottom: 15px;">cyber pager system v1.0</h3>
+        
+        <div class="pager-device">
+            <div class="pager-screen-bezel">
+                <div class="pager-lcd">
+                    <div class="pager-lcd-status">
+                        <span>[1] PAGE RECEIVED</span>
+                        <span id="pager-time">13:46</span>
+                    </div>
+                    <div class="pager-lcd-main" id="pager-display">READY _</div>
+                    <div style="font-size: 0.6rem; text-align: right; opacity: 0.7;" id="pager-translation">MESSENGER ACTIVE</div>
+                </div>
+            </div>
+            <div class="pager-hardware-buttons">
+                <button class="pager-circle-btn" onclick="resetPagerLCD()" title="알림 초기화"></button>
+                <div class="pager-pill-btns">
+                    <button class="pager-pill" onclick="pressKeypad('486')">486</button>
+                    <button class="pager-pill" onclick="pressKeypad('1004')">1004</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pager-keypad-box">
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label>input code to trans</label>
+                <input type="text" id="pager-input" placeholder="" readonly style="text-align: center; font-size: 0.95rem; letter-spacing: 2px;">
+            </div>
+            <div class="pager-keypad-grid">
+                <button class="keypad-btn" onclick="pressKeypad('1')">1</button>
+                <button class="keypad-btn" onclick="pressKeypad('2')">2</button>
+                <button class="keypad-btn" onclick="pressKeypad('3')">3</button>
+                <button class="keypad-btn" onclick="pressKeypad('4')">4</button>
+                <button class="keypad-btn" onclick="pressKeypad('5')">5</button>
+                <button class="keypad-btn" onclick="pressKeypad('6')">6</button>
+                <button class="keypad-btn" onclick="pressKeypad('7')">7</button>
+                <button class="keypad-btn" onclick="pressKeypad('8')">8</button>
+                <button class="keypad-btn" onclick="pressKeypad('9')">9</button>
+                <button class="keypad-btn" onclick="pressKeypad('*')">*</button>
+                <button class="keypad-btn" onclick="pressKeypad('0')">0</button>
+                <button class="keypad-btn" onclick="pressKeypad('#')">#</button>
+            </div>
+            <div class="keypad-action-row">
+                <button class="pager-clear" onclick="clearPagerInput()">CLEAR</button>
+                <button class="pager-send" onclick="sendPagerMessage()">SEND ⟡</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 공통: 탭 전환 스크립트 ---
+    function switchTab(tabNum) {
+        document.querySelectorAll('.tab-item').forEach((tab) => tab.classList.remove('active'));
+        document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+        
+        document.querySelectorAll('.tab-item')[tabNum-1].classList.add('active');
+        document.getElementById(`panel-${tabNum}`).classList.add('active');
+    }
+
+    // --- TRACK 01. MP3 플레이어 로직 ---
+    let playlist = JSON.parse(localStorage.getItem('y2k_mp3_tracks')) || [
+        { id: 1, title: "Bubble Gum", artist: "NewJeans", link: "https://www.youtube.com" }
+    ];
+    let isPlaying = false, eqInterval = null, currentTrack = null;
+
+    function renderTracks() {
+        const listView = document.getElementById('track-list-view');
+        listView.innerHTML = '';
+        playlist.forEach(track => {
+            const li = document.createElement('li');
+            li.className = 'track-item';
+            li.innerHTML = `<div class="track-info" onclick="selectTrack(${track.id})">🎵 ${track.artist} - ${track.title}</div>
+                            <button class="track-del" onclick="deleteTrack(${track.id})">[x]</button>`;
+            listView.appendChild(li);
+        });
+    }
+
+    function selectTrack(id) {
+        const track = playlist.find(t => t.id === id);
+        if(track) {
+            currentTrack = track;
+            document.getElementById('screen-title').innerText = `${track.artist} - ${track.title}`;
+            if(track.link.startsWith('http')) window.open(track.link, '_blank');
+            if(!isPlaying) togglePlay();
+        }
+    }
+
+    function togglePlay() {
+        if(!currentTrack && playlist.length > 0) { selectTrack(playlist[0].id); return; }
+        if (!currentTrack) return;
+        isPlaying = !isPlaying;
+        const statusText = document.getElementById('play-status');
+        const eqBars = document.querySelectorAll('.eq-bar');
+        if(isPlaying) {
+            statusText.innerText = "PLAY";
+            eqInterval = setInterval(() => {
+                eqBars.forEach(bar => { bar.style.height = `${Math.floor(Math.random() * 23) + 3}px`; });
+            }, 150);
+        } else {
+            statusText.innerText = "STOP";
+            clearInterval(eqInterval);
+            eqBars.forEach(bar => bar.style.height = '3px');
+        }
+    }
+
+    function addTrack() {
+        const title = document.getElementById('song-title').value.trim();
+        const artist = document.getElementById('song-artist').value.trim();
+        const link = document.getElementById('song-link').value.trim();
+        if(!title || !artist) return;
+        playlist.push({ id: Date.now(), title, artist, link });
+        localStorage.setItem('y2k_mp3_tracks', JSON.stringify(playlist));
+        renderTracks();
+        document.getElementById('song-title').value = ''; document.getElementById('song-artist').value = ''; document.getElementById('song-link').value = '';
+    }
+
+    function deleteTrack(id) {
+        playlist = playlist.filter(t => t.id !== id);
+        localStorage.setItem('y2k_mp3_tracks', JSON.stringify(playlist));
+        renderTracks();
+    }
+
+    // --- TRACK 02. 다이어리 꾸미기 로직 ---
+    let diaryStickers = JSON.parse(localStorage.getItem('y2k_diary_stickers')) || [];
+    document.getElementById('diary-text').value = localStorage.getItem('y2k_diary_text') || '';
+
+    function addReceiptText() {
+        const quotes = [
+            "\n[SYSTEM] vibe check : passed ✔",
+            "\n--- chillin' in my blue zone ---",
+            "\n🎵 now playing: low fidelity memory",
+            "\n[LOADING] 99% pure neon identity...",
+            "\n* blink and you'll miss the aesthetic *"
+        ];
+        const textarea = document.getElementById('diary-text');
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        textarea.value += randomQuote;
+    }
+
+    function spawnSticker(emoji, left = 50, top = 50, scale = 1, id = Date.now()) {
+        const paper = document.getElementById('diary-paper');
+        const sticker = document.createElement('div');
+        sticker.className = 'placed-sticker';
+        sticker.innerText = emoji;
+        sticker.style.left = left + 'px';
+        sticker.style.top = top + 'px';
+        sticker.style.transform = `scale(${scale})`;
+        sticker.setAttribute('data-id', id);
+        sticker.setAttribute('data-emoji', emoji);
+        sticker.setAttribute('data-scale', scale);
+
+        sticker.onwheel = function(event) {
+            event.preventDefault();
+            let currentScale = parseFloat(sticker.getAttribute('data-scale') || 1);
+            if (event.deltaY < 0) {
+                currentScale = Math.min(currentScale + 0.1, 2.5);
+            } else {
+                currentScale = Math.max(currentScale - 0.1, 0.5);
+            }
+            sticker.setAttribute('data-scale', currentScale);
+            sticker.style.transform = `scale(${currentScale})`;
+        };
+
+        sticker.onmousedown = function(event) {
+            let shiftX = event.clientX - sticker.getBoundingClientRect().left;
+            let shiftY = event.clientY - sticker.getBoundingClientRect().top;
+
+            function moveAt(clientX, clientY) {
+                let paperRect = paper.getBoundingClientRect();
+                let newLeft = clientX - paperRect.left - shiftX;
+                let newTop = clientY - paperRect.top - shiftY;
+
+                if(newLeft < 0) newLeft = 0;
+                if(newTop < 0) newTop = 0;
+                if(newLeft > paperRect.width - 30) newLeft = paperRect.width - 30;
+                if(newTop > paperRect.height - 30) newTop = paperRect.height - 30;
+
+                sticker.style.left = newLeft + 'px';
+                sticker.style.top = newTop + 'px';
+            }
+
+            function onMouseMove(event) { moveAt(event.clientX, event.clientY); }
+            document.addEventListener('mousemove', onMouseMove);
+            document.onmouseup = function() {
+                document.removeEventListener('mousemove', onMouseMove);
+                sticker.onmouseup = null;
+            };
+        };
+
+        sticker.ondblclick = function() { sticker.remove(); };
+        sticker.ondragstart = function() { return false; };
+        paper.appendChild(sticker);
+    }
+
+    diaryStickers.forEach(s => spawnSticker(s.emoji, s.left, s.top, s.scale || 1, s.id));
+
+    function saveDiary() {
+        const textValue = document.getElementById('diary-text').value;
+        localStorage.setItem('y2k_diary_text', textValue);
+
+        const stickerElements = document.querySelectorAll('.placed-sticker');
+        const stickerData = [];
+        stickerElements.forEach(el => {
+            stickerData.push({
+                id: el.getAttribute('data-id'),
+                emoji: el.getAttribute('data-emoji'),
+                left: parseInt(el.style.left),
+                top: parseInt(el.style.top),
+                scale: parseFloat(el.getAttribute('data-scale') || 1)
+            });
+        });
+        localStorage.setItem('y2k_diary_stickers', JSON.stringify(stickerData));
+
+        const receiptPaper = document.getElementById('receipt-paper');
+        const receiptDate = document.getElementById('receipt-date');
+        const receiptContent = document.getElementById('receipt-content');
+
+        const now = new Date();
+        receiptDate.innerText = `DATE: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        receiptContent.innerText = textValue.trim() || "(Empty Log)";
+        receiptPaper.classList.add('dispense');
+    }
+
+    function retractReceipt() {
+        document.getElementById('receipt-paper').classList.remove('dispense');
+    }
+
+    // --- 📟 TRACK 03. 삐삐 전용 로직 ---
+    const pagerDictionary = {
+        "486": "사랑해 (I LOVE YOU)",
+        "1004": "천사 (ANGEL)",
+        "8282": "빨리빨리 (HURRY UP)",
+        "7942": "친구사이 (JUST FRIENDS)",
+        "0124": "영원히 사랑해 (FOREVER)",
+        "17171771": "I MISS YOU (뒤집어봐!)",
+        "0000": "대기중 (ON STANDBY)"
+    };
+
+    function pressKeypad(num) {
+        const input = document.getElementById('pager-input');
+        if(input.value.length < 10) {
+            input.value += num;
+        }
+    }
+
+    function clearPagerInput() {
+        document.getElementById('pager-input').value = '';
+    }
+
+    function sendPagerMessage() {
+        const code = document.getElementById('pager-input').value;
+        const display = document.getElementById('pager-display');
+        const trans = document.getElementById('pager-translation');
+        const timeBox = document.getElementById('pager-time');
+        
+        if(!code) return;
+
+        const d = new Date();
+        timeBox.innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+        display.innerText = code;
+        if(pagerDictionary[code]) {
+            trans.innerText = `[해독]: ${pagerDictionary[code]}`;
+        } else {
+            trans.innerText = "[알수없는 코드] 음성사서함 확인 요망";
+        }
+        clearPagerInput();
+    }
+
+    function resetPagerLCD() {
+        document.getElementById('pager-display').innerText = "READY _";
+        document.getElementById('pager-translation').innerText = "MESSENGER ACTIVE";
+    }
+
+    window.onload = function() {
+        renderTracks();
+    };
+</script>
+</body>
+</html>
